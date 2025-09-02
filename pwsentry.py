@@ -3,6 +3,7 @@ from ldap3 import NTLM, ALL, SUBTREE, BASE
 from argparse import ArgumentParser
 from rich.console import Console
 import ldap3
+import os
 
 console = Console()
 
@@ -13,8 +14,21 @@ def banner():
 |   __| | | |__   | -_|   |  _|  _| | |
 |__|  |_____|_____|___|_|_|_| |_| |_  |
                                   |___|
-                        by: katashi 🤠'''
+                        by: katashi 🇨🇳'''
     return art
+
+def get_ip_addresses(ip_arg):
+    if os.path.isfile(ip_arg):
+        try:
+            with open(ip_arg, 'r') as file:
+                ips = [line.strip() for line in file if line.strip()]
+            console.print(f'[[blue]INFO[/blue]] Loaded {len(ips)} IP addresses from file: {ip_arg}')
+            return ips
+        except Exception as e:
+            console.print(f'[[red]ERR[/red]] Error reading IP file {ip_arg}: {e}')
+            exit(1)
+    else:
+        return [ip_arg]
 
 def forceChangePassword(ip, netbios, owned_user, password, base_dn, wordlist, target_user):
     server = ldap3.Server(ip, get_info=ALL)
@@ -71,12 +85,12 @@ def forceChangePassword(ip, netbios, owned_user, password, base_dn, wordlist, ta
 
 if '__main__' == __name__:
     parser = ArgumentParser(description='ForceChangePassword checker.')
-    parser.add_argument('-w', '--wordlist')
-    parser.add_argument('-t', '--target_user')
-    parser.add_argument('-i', '--ip', required=True)
-    parser.add_argument('-u', '--user', required=True)
-    parser.add_argument('-d', '--domain', required=True)
-    parser.add_argument('-p', '--password', required=True)
+    parser.add_argument('-w', '--wordlist', help='Path to wordlist containing usernames (one per line)')
+    parser.add_argument('-t', '--target_user', help='Single target username')
+    parser.add_argument('-i', '--ip', required=True, help='Single IP address or path to file containing IP addresses (one per line)')
+    parser.add_argument('-u', '--user', required=True, help='Username to use for authentication')
+    parser.add_argument('-d', '--domain', required=True, help='FQDN domain to use for authentication')
+    parser.add_argument('-p', '--password', required=True, help='Password to use for authentication')
 
     console.print(f'[purple]{banner()}[/purple]')
 
@@ -91,11 +105,18 @@ if '__main__' == __name__:
     netbios = parts[0].upper()
     base_dn = ','.join('DC=' + part for part in parts)
 
-    try:
-        forceChangePassword(args.ip, netbios, args.user, args.password, base_dn, args.wordlist, args.target_user)
-    except EOFError:
-        console.print(f'[[red]ERR[/red]] EOFError:\n {EOFError}')
-        exit(1)
-    except KeyboardInterrupt:
-        console.print(f'[[red]ERR[/red]] Keyboard interrupt.')
-        exit(1)
+    ip_addresses = get_ip_addresses(args.ip)
+
+    for ip in ip_addresses:
+        console.print(f'[[yellow]INFO[/yellow]] Testing IP: {ip}')
+        try:
+            forceChangePassword(ip, netbios, args.user, args.password, base_dn, args.wordlist, args.target_user)
+        except EOFError:
+            console.print(f'[[red]ERR[/red]] EOFError for IP {ip}:\n {EOFError}')
+            continue
+        except KeyboardInterrupt:
+            console.print(f'[[red]ERR[/red]] Keyboard interrupt.')
+            exit(1)
+        except Exception as e:
+            console.print(f'[[red]ERR[/red]] Error with IP {ip}: {e}')
+            continue
