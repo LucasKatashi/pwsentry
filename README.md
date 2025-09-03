@@ -13,7 +13,7 @@ PwSentry 通过扫描账户的 `allowedAttributesEffective` 属性中的 `pwdLas
 # 安装说明 (Installation Instructions)
 ```sh
 git clone github.com/LucasKatashi/pwsentry
-cd pwsentry
+cd pwsentry/
 chmod +x pwsentry.py
 ```
 
@@ -23,7 +23,6 @@ chmod +x pwsentry.py
 ```
 
 这将显示该工具的帮助信息。以下是它支持的所有选项。
-
 ```
 
  _____       _____         _
@@ -48,4 +47,20 @@ ForceChangePassword 检查器。
   -d, --domain DOMAIN   用于身份验证的完整域名 (FQDN)
   -p, --password PASSWORD
                         用于身份验证的密码
+```
+
+使用示例：
+```bash
+$ ./pwsentry.py -i 192.168.1.2 -d domain.corp -u 'FS01$' -p 'China@N1' -w usernames.txt
+
+ _____       _____         _
+|  _  |_ _ _|   __|___ ___| |_ ___ _ _
+|   __| | | |__   | -_|   |  _|  _| | |
+|__|  |_____|_____|___|_|_|_| |_| |_  |
+                                  |___|
+                        by: katashi 🇨🇳
+[INFO] Testing IP: 10.129.242.59
+[ERR] User FS01$ cannot change user admin password.
+[ERR] User FS01$ cannot change user Administrator password.
+[OK] User FS01$ can change user ADMWS01$ password. (pwned!)
 ```
