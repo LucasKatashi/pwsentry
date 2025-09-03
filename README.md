@@ -50,7 +50,7 @@ ForceChangePassword 检查器。
 ```
 
 使用示例：
-```bash
+```
 $ ./pwsentry.py -i 192.168.1.2 -d domain.corp -u 'FS01$' -p 'China@N1' -w usernames.txt
 
  _____       _____         _
